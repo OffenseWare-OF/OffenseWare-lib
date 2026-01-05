@@ -1,332 +1,257 @@
 --[[ 
-    OffenseWare UI Library - Delta Rescue Version
-    Target: Mobile / PlayerGui Force
+    OffenseWare UI Library - DELTA & MOBILE OPTIMIZED
+    Style: Classic "Pepsi" / High-Contrast Red & Dark
 ]]
 
 local Library = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local LocalPlayer = game:GetService("Players").LocalPlayer
 
--- 1. SICHERSTELLEN, DASS WIR DAS RICHTIGE PARENT HABEN
--- Wir erzwingen PlayerGui, da CoreGui auf Delta oft spinnt.
-local function GetParent()
+-- Funktion für sicheres Parenting (Wichtig für Delta Executor)
+local function GetSafeParent()
+    local Success, Parent = pcall(function() return gethui() end)
+    if Success and Parent then return Parent end
     return LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- 2. ALTE UI LÖSCHEN (Cleanup)
--- Falls das Script schonmal lief, löschen wir die alte UI, um Bugs zu vermeiden.
-pcall(function()
-    if LocalPlayer.PlayerGui:FindFirstChild("OffenseWare_Mobile") then
-        LocalPlayer.PlayerGui.OffenseWare_Mobile:Destroy()
+-- Dragging Funktion (Touch-kompatibel)
+local function MakeDraggable(topbarobject, object)
+    local Dragging = nil
+    local DragInput = nil
+    local DragStart = nil
+    local StartPosition = nil
+
+    local function Update(input)
+        local Delta = input.Position - DragStart
+        object.Position = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
     end
-end)
+
+    topbarobject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = true
+            DragStart = input.Position
+            StartPosition = object.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                end
+            end)
+        end
+    end)
+
+    topbarobject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            DragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == DragInput and Dragging then
+            Update(input)
+        end
+    end)
+end
 
 function Library:CreateWindow(HubName)
-    print("Starte UI Erstellung...") -- Debug Print
-
     local OffenseWare = Instance.new("ScreenGui")
-    OffenseWare.Name = "OffenseWare_Mobile"
-    OffenseWare.Parent = GetParent()
-    OffenseWare.ResetOnSpawn = false
-    OffenseWare.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    OffenseWare.IgnoreGuiInset = true -- WICHTIG FÜR MOBILE (Damit es nicht hinter der Topbar verschwindet)
-
     local MainFrame = Instance.new("Frame")
     local TopBar = Instance.new("Frame")
     local Title = Instance.new("TextLabel")
+    local DecorLine = Instance.new("Frame")
     local TabContainer = Instance.new("ScrollingFrame")
     local PageContainer = Instance.new("Frame")
     
-    -- TOGGLE BUTTON (Damit du es öffnen kannst)
-    local ToggleBtn = Instance.new("TextButton")
-    ToggleBtn.Name = "ToggleUI"
-    ToggleBtn.Parent = OffenseWare
-    ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Hellgrün damit man es sieht
-    ToggleBtn.Position = UDim2.new(0, 20, 0, 50) -- Oben Links, unter der Roblox Leiste
-    ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-    ToggleBtn.Font = Enum.Font.SourceSansBold
-    ToggleBtn.Text = "MENU"
-    ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleBtn.TextSize = 14
+    OffenseWare.Name = "OffenseWareLib"
+    OffenseWare.Parent = GetSafeParent()
+    OffenseWare.ResetOnSpawn = false
+    OffenseWare.IgnoreGuiInset = true -- Für Mobile optimiert
+
+    -- MOBILE TOGGLE BUTTON (Grüner Knopf zum Öffnen)
+    local MobileToggle = Instance.new("TextButton")
+    MobileToggle.Name = "MobileToggle"
+    MobileToggle.Parent = OffenseWare
+    MobileToggle.Size = UDim2.new(0, 45, 0, 45)
+    MobileToggle.Position = UDim2.new(0, 10, 0, 50)
+    MobileToggle.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+    MobileToggle.Text = "OW"
+    MobileToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MobileToggle.Font = Enum.Font.Code
+    MobileToggle.TextSize = 18
     
     local ToggleCorner = Instance.new("UICorner")
     ToggleCorner.CornerRadius = UDim.new(1, 0)
-    ToggleCorner.Parent = ToggleBtn
+    ToggleCorner.Parent = MobileToggle
     
-    -- Main Frame Setup
+    MobileToggle.MouseButton1Click:Connect(function()
+        MainFrame.Visible = not MainFrame.Visible
+    end)
+
+    -- Main Frame
     MainFrame.Name = "MainFrame"
     MainFrame.Parent = OffenseWare
     MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Mittig
-    MainFrame.Size = UDim2.new(0, 400, 0, 300)
-    MainFrame.Visible = false -- Startet unsichtbar, Button drücken!
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+    MainFrame.Size = UDim2.new(0, 450, 0, 300) -- Etwas kleiner für Mobile
     
-    local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 8)
-    MainCorner.Parent = MainFrame
-    
-    local MainStroke = Instance.new("UIStroke")
-    MainStroke.Parent = MainFrame
-    MainStroke.Color = Color3.fromRGB(200, 40, 40)
-    MainStroke.Thickness = 2
+    local Border = Instance.new("UIStroke")
+    Border.Parent = MainFrame
+    Border.Thickness = 2
+    Border.Color = Color3.fromRGB(200, 40, 40)
 
-    -- Toggle Logik
-    ToggleBtn.MouseButton1Click:Connect(function()
-        MainFrame.Visible = not MainFrame.Visible
-    end)
-    
-    -- Einfache Drag Funktion für Mobile
-    local function AddDrag(obj)
-        local dragging, dragInput, dragStart, startPos
-        obj.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = input.Position
-                startPos = obj.Position
-                
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
-                end)
-            end
-        end)
-        obj.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                local delta = input.Position - dragStart
-                obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            end
-        end)
-    end
-    AddDrag(ToggleBtn) -- Button bewegbar machen
-    AddDrag(MainFrame) -- Fenster bewegbar machen
-
-    -- TopBar
+    -- Top Bar
+    TopBar.Name = "TopBar"
     TopBar.Parent = MainFrame
     TopBar.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-    TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BorderSizePixel = 0
+    TopBar.Size = UDim2.new(1, 0, 0, 35)
     
-    local TopBarCorner = Instance.new("UICorner")
-    TopBarCorner.CornerRadius = UDim.new(0, 8)
-    TopBarCorner.Parent = TopBar
-    
-    -- Fix für die unteren Ecken der Topbar
-    local TopFill = Instance.new("Frame")
-    TopFill.Parent = TopBar
-    TopFill.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-    TopFill.BorderSizePixel = 0
-    TopFill.Size = UDim2.new(1, 0, 0, 10)
-    TopFill.Position = UDim2.new(0, 0, 1, -10)
+    MakeDraggable(TopBar, MainFrame)
 
+    Title.Name = "Title"
     Title.Parent = TopBar
     Title.BackgroundTransparency = 1
-    Title.Size = UDim2.new(1, -50, 1, 0)
-    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Size = UDim2.new(1, -20, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
     Title.Font = Enum.Font.Code
-    Title.Text = HubName
+    Title.Text = HubName or "OffenseWare"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextSize = 20
     Title.TextXAlignment = Enum.TextXAlignment.Left
-    
-    -- Container Setup
+
+    DecorLine.Name = "DecorLine"
+    DecorLine.Parent = MainFrame
+    DecorLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DecorLine.BorderSizePixel = 0
+    DecorLine.Position = UDim2.new(0, 0, 0, 35)
+    DecorLine.Size = UDim2.new(1, 0, 0, 2)
+
+    TabContainer.Name = "TabContainer"
     TabContainer.Parent = MainFrame
     TabContainer.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    TabContainer.Position = UDim2.new(0, 0, 0, 40)
-    TabContainer.Size = UDim2.new(0, 110, 1, -40)
     TabContainer.BorderSizePixel = 0
+    TabContainer.Position = UDim2.new(0, 0, 0, 37)
+    TabContainer.Size = UDim2.new(0, 100, 1, -37)
+    TabContainer.ScrollBarThickness = 0
     
-    local TabCorner = Instance.new("UICorner")
-    TabCorner.CornerRadius = UDim.new(0, 8)
-    TabCorner.Parent = TabContainer
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.Parent = TabContainer
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local TabList = Instance.new("UIListLayout")
-    TabList.Parent = TabContainer
-    TabList.Padding = UDim.new(0, 5)
-    
-    local TabPad = Instance.new("UIPadding")
-    TabPad.Parent = TabContainer
-    TabPad.PaddingTop = UDim.new(0, 10)
-
+    PageContainer.Name = "PageContainer"
     PageContainer.Parent = MainFrame
-    PageContainer.BackgroundTransparency = 1
-    PageContainer.Position = UDim2.new(0, 110, 0, 40)
-    PageContainer.Size = UDim2.new(1, -110, 1, -40)
+    PageContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    PageContainer.BorderSizePixel = 0
+    PageContainer.Position = UDim2.new(0, 100, 0, 37)
+    PageContainer.Size = UDim2.new(1, -100, 1, -37)
 
-    local Funcs = {}
-    local FirstPage = true
+    local WindowFunctions = {}
+    local FirstTab = true
 
-    function Funcs:CreateTab(Name)
-        local TabBtn = Instance.new("TextButton")
+    function WindowFunctions:CreateTab(TabName)
+        local TabButton = Instance.new("TextButton")
         local Page = Instance.new("ScrollingFrame")
-        local PageList = Instance.new("UIListLayout")
-        
-        TabBtn.Parent = TabContainer
-        TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        TabBtn.BackgroundTransparency = 1
-        TabBtn.Size = UDim2.new(1, 0, 0, 35)
-        TabBtn.Font = Enum.Font.SourceSansBold
-        TabBtn.Text = Name
-        TabBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-        TabBtn.TextSize = 16
-        
-        Page.Parent = PageContainer
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.Visible = false
-        Page.ScrollBarThickness = 2
-        
-        PageList.Parent = Page
-        PageList.Padding = UDim.new(0, 8)
-        PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        
-        local PagePad = Instance.new("UIPadding")
-        PagePad.Parent = Page
-        PagePad.PaddingTop = UDim.new(0, 10)
-        PagePad.PaddingLeft = UDim.new(0, 10)
-        PagePad.PaddingRight = UDim.new(0, 10)
+        local PageLayout = Instance.new("UIListLayout")
+        local PagePadding = Instance.new("UIPadding")
 
-        if FirstPage then
+        TabButton.Name = TabName .. "Btn"
+        TabButton.Parent = TabContainer
+        TabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        TabButton.BorderSizePixel = 0
+        TabButton.Size = UDim2.new(1, 0, 0, 35)
+        TabButton.Font = Enum.Font.Code
+        TabButton.Text = TabName
+        TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabButton.TextSize = 14
+
+        Page.Name = TabName .. "Page"
+        Page.Parent = PageContainer
+        Page.Active = true
+        Page.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        Page.BorderSizePixel = 0
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.ScrollBarThickness = 2
+        Page.Visible = false
+
+        if FirstTab then
             Page.Visible = true
-            TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            FirstPage = false
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            FirstTab = false
         end
 
-        TabBtn.MouseButton1Click:Connect(function()
-            for _, v in pairs(PageContainer:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
-            for _, v in pairs(TabContainer:GetChildren()) do if v:IsA("TextButton") then v.TextColor3 = Color3.fromRGB(180, 180, 180) end end
+        PageLayout.Parent = Page
+        PageLayout.Padding = UDim.new(0, 6)
+        PagePadding.Parent = Page
+        PagePadding.PaddingTop = UDim.new(0, 10)
+        PagePadding.PaddingLeft = UDim.new(0, 10)
+        PagePadding.PaddingRight = UDim.new(0, 10)
+
+        TabButton.MouseButton1Click:Connect(function()
+            for _, v in pairs(PageContainer:GetChildren()) do
+                if v:IsA("ScrollingFrame") then v.Visible = false end
+            end
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then 
+                    v.TextColor3 = Color3.fromRGB(150, 150, 150)
+                end
+            end
             Page.Visible = true
-            TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         end)
 
-        local TabItems = {}
+        local TabFunctions = {}
 
-        function TabItems:CreateButton(Text, Callback)
-            local Btn = Instance.new("TextButton")
-            Btn.Parent = Page
-            Btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-            Btn.Size = UDim2.new(1, -5, 0, 40)
-            Btn.Font = Enum.Font.SourceSans
-            Btn.Text = Text
-            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Btn.TextSize = 16
-            
-            local UIC = Instance.new("UICorner")
-            UIC.Parent = Btn
-            
-            Btn.MouseButton1Click:Connect(function()
-                pcall(Callback)
-            end)
+        function TabFunctions:CreateButton(BtnText, Callback)
+            local ButtonFrame = Instance.new("TextButton")
+            local ButtonCorner = Instance.new("UICorner")
+            ButtonFrame.Parent = Page
+            ButtonFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            ButtonFrame.Size = UDim2.new(1, -5, 0, 40)
+            ButtonFrame.Font = Enum.Font.SourceSansBold
+            ButtonFrame.Text = BtnText
+            ButtonFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ButtonFrame.TextSize = 16
+            ButtonCorner.CornerRadius = UDim.new(0, 4)
+            ButtonCorner.Parent = ButtonFrame
+            ButtonFrame.MouseButton1Click:Connect(function() pcall(Callback) end)
         end
-        
-        -- Toggle Fix
-        function TabItems:CreateToggle(Text, Default, Callback)
-            local ToggleVal = Default or false
-            local TFrame = Instance.new("TextButton") -- Button statt Frame für besseren Klick
-            TFrame.Parent = Page
-            TFrame.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-            TFrame.Size = UDim2.new(1, -5, 0, 40)
-            TFrame.Text = ""
-            TFrame.AutoButtonColor = false
-            
-            local TC = Instance.new("UICorner")
-            TC.Parent = TFrame
-            
-            local TLab = Instance.new("TextLabel")
-            TLab.Parent = TFrame
-            TLab.BackgroundTransparency = 1
-            TLab.Position = UDim2.new(0, 10, 0, 0)
-            TLab.Size = UDim2.new(0.7, 0, 1, 0)
-            TLab.Text = Text
-            TLab.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TLab.TextSize = 16
-            TLab.TextXAlignment = Enum.TextXAlignment.Left
-            TLab.Font = Enum.Font.SourceSans
 
-            local Status = Instance.new("Frame")
-            Status.Parent = TFrame
-            Status.Position = UDim2.new(1, -30, 0.5, -10)
-            Status.Size = UDim2.new(0, 20, 0, 20)
-            Status.BackgroundColor3 = ToggleVal and Color3.fromRGB(200, 40, 40) or Color3.fromRGB(80, 80, 80)
+        function TabFunctions:CreateToggle(ToggleText, Default, Callback)
+            local Toggled = Default or false
+            local ToggleFrame = Instance.new("TextButton")
+            local Indicator = Instance.new("Frame")
+            ToggleFrame.Parent = Page
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            ToggleFrame.Size = UDim2.new(1, -5, 0, 40)
+            ToggleFrame.Text = "  " .. ToggleText
+            ToggleFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ToggleFrame.TextXAlignment = Enum.TextXAlignment.Left
+            ToggleFrame.Font = Enum.Font.SourceSansBold
+            ToggleFrame.TextSize = 16
             
-            local SC = Instance.new("UICorner"); SC.Parent = Status; SC.CornerRadius = UDim.new(0, 4)
+            Indicator.Parent = ToggleFrame
+            Indicator.Size = UDim2.new(0, 20, 0, 20)
+            Indicator.Position = UDim2.new(1, -30, 0.5, -10)
+            Indicator.BackgroundColor3 = Toggled and Color3.fromRGB(200, 40, 40) or Color3.fromRGB(80, 80, 80)
+            
+            local IC = Instance.new("UICorner")
+            IC.CornerRadius = UDim.new(0, 4)
+            IC.Parent = Indicator
 
-            TFrame.MouseButton1Click:Connect(function()
-                ToggleVal = not ToggleVal
-                Status.BackgroundColor3 = ToggleVal and Color3.fromRGB(200, 40, 40) or Color3.fromRGB(80, 80, 80)
-                pcall(Callback, ToggleVal)
+            ToggleFrame.MouseButton1Click:Connect(function()
+                Toggled = not Toggled
+                Indicator.BackgroundColor3 = Toggled and Color3.fromRGB(200, 40, 40) or Color3.fromRGB(80, 80, 80)
+                pcall(Callback, Toggled)
             end)
         end
 
-        function TabItems:CreateSlider(Text, Min, Max, Default, Callback)
-            local Val = Default or Min
-            local SFrame = Instance.new("Frame")
-            SFrame.Parent = Page
-            SFrame.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-            SFrame.Size = UDim2.new(1, -5, 0, 50)
-            
-            local SC = Instance.new("UICorner"); SC.Parent = SFrame
-            
-            local SLabel = Instance.new("TextLabel")
-            SLabel.Parent = SFrame
-            SLabel.BackgroundTransparency = 1
-            SLabel.Position = UDim2.new(0, 10, 0, 5)
-            SLabel.Size = UDim2.new(1, -20, 0, 20)
-            SLabel.Text = Text .. ": " .. tostring(Val)
-            SLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-            SLabel.TextXAlignment = Enum.TextXAlignment.Left
-            
-            local Bar = Instance.new("Frame")
-            Bar.Parent = SFrame
-            Bar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            Bar.Position = UDim2.new(0, 10, 0, 30)
-            Bar.Size = UDim2.new(1, -20, 0, 10)
-            local BC = Instance.new("UICorner"); BC.Parent = Bar
-            
-            local Fill = Instance.new("Frame")
-            Fill.Parent = Bar
-            Fill.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-            Fill.Size = UDim2.new((Val - Min) / (Max - Min), 0, 1, 0)
-            local FC = Instance.new("UICorner"); FC.Parent = Fill
-            
-            local Trigger = Instance.new("TextButton")
-            Trigger.Parent = SFrame
-            Trigger.BackgroundTransparency = 1
-            Trigger.Size = UDim2.new(1, 0, 1, 0)
-            Trigger.Text = ""
-            
-            local dragging = false
-            local function Update(input)
-                local pos = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                local res = math.floor(Min + ((Max - Min) * pos))
-                Fill.Size = UDim2.new(pos, 0, 1, 0)
-                SLabel.Text = Text .. ": " .. tostring(res)
-                pcall(Callback, res)
-            end
-            
-            Trigger.InputBegan:Connect(function(inp) 
-                if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true; Update(inp)
-                end
-            end)
-            UserInputService.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-            end)
-            UserInputService.InputChanged:Connect(function(inp)
-                if dragging and (inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseMovement) then Update(inp) end
-            end)
-        end
-
-        return TabItems
+        return TabFunctions
     end
-
-    print("UI Erfolgreich geladen!")
-    return Funcs
+    
+    return WindowFunctions
 end
 
 return Library

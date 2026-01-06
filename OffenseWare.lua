@@ -1,6 +1,5 @@
 --[[ 
-    OffenseWare UI Library V8 (Ultimate)
-    - Merged Features: Abyss (Colors), Akiri (Anim), Bracket (Layout)
+    OffenseWare UI Library V8 
     - Fixes: Real-time Dropdown Text, Auto-Canvas Resizing
     - Mobile: Optimized Touch & Toggle Button
 ]]
@@ -14,7 +13,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- // THEME (Abyss/Akiri Style) //
+-- // THEME 
 local Theme = {
     Main = Color3.fromRGB(170, 60, 255),    -- Neon Purple (Akiri Glow)
     Background = Color3.fromRGB(18, 18, 22), -- Deep Abyss Dark
@@ -96,7 +95,7 @@ function Library:CreateWindow(HubName)
     local MainCorner = Instance.new("UICorner"); MainCorner.CornerRadius = UDim.new(0, 8); MainCorner.Parent = MainFrame
     local MainStroke = Instance.new("UIStroke"); MainStroke.Parent = MainFrame; MainStroke.Color = Theme.Outline; MainStroke.Thickness = 1
 
-    -- SHADOW (Abyss Glow)
+    -- SHADOW (Glow)
     local Shadow = Instance.new("ImageLabel")
     Shadow.Parent = MainFrame; Shadow.BackgroundTransparency = 1; Shadow.Position = UDim2.new(0, -25, 0, -25); Shadow.Size = UDim2.new(1, 50, 1, 50); Shadow.ZIndex = -1
     Shadow.Image = "rbxassetid://6015897843"; Shadow.ImageColor3 = Color3.fromRGB(0,0,0); Shadow.ImageTransparency = 0.4
@@ -218,7 +217,7 @@ function Library:CreateWindow(HubName)
             Btn.MouseButton1Click:Connect(function() CreateRipple(Btn); pcall(Callback) end)
         end
 
-        -- TOGGLE (Switch Style - Akiri)
+        -- TOGGLE (Switch Style)
         function Elements:CreateToggle(Text, Default, Callback)
             local Toggled = Default or false
             local Tog = Instance.new("TextButton"); Tog.Parent = Page; Tog.BackgroundColor3 = Theme.Element; Tog.Size = UDim2.new(1, 0, 0, 34); Tog.Text = ""; Tog.AutoButtonColor = false

@@ -318,6 +318,84 @@ function Library:CreateWindow(HubName)
             UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
             UserInputService.InputChanged:Connect(function(i) if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then Update(i) end end)
         end
+                -- COLOR PICKER
+        function Elements:CreateColorPicker(Text, Default, Callback)
+            local ColorVal = Default or Color3.fromRGB(255, 255, 255)
+            local HSV = {H = 0, S = 1, V = 1} -- Hue, Saturation, Value
+            local PickerOpen = false
+
+            -- Main Frame
+            local CPFrame = Instance.new("Frame"); CPFrame.Parent = Page; CPFrame.BackgroundColor3 = Theme.Element; CPFrame.Size = UDim2.new(1, 0, 0, 34); CPFrame.ClipsDescendants = true
+            local CC = Instance.new("UICorner"); CC.CornerRadius = UDim.new(0, 4); CC.Parent = CPFrame
+            local CS = Instance.new("UIStroke"); CS.Parent = CPFrame; CS.Color = Theme.Outline; CS.Thickness = 1
+
+            -- Title / Label
+            local Lab = Instance.new("TextLabel"); Lab.Parent = CPFrame; Lab.BackgroundTransparency = 1; Lab.Position = UDim2.new(0, 10, 0, 0); Lab.Size = UDim2.new(0.5, 0, 0, 34); Lab.Font = Enum.Font.Gotham; Lab.Text = Text; Lab.TextColor3 = Theme.Text; Lab.TextSize = 13; Lab.TextXAlignment = Enum.TextXAlignment.Left
+
+            -- Preview Box (rechts)
+            local Preview = Instance.new("TextButton"); Preview.Parent = CPFrame; Preview.BackgroundColor3 = ColorVal; Preview.Position = UDim2.new(1, -45, 0, 7); Preview.Size = UDim2.new(0, 35, 0, 20); Preview.Text = ""; Preview.AutoButtonColor = false
+            local PC = Instance.new("UICorner"); PC.CornerRadius = UDim.new(0, 4); PC.Parent = Preview
+            local PS = Instance.new("UIStroke"); PS.Parent = Preview; PS.Color = Theme.Outline; PS.Thickness = 1
+
+            -- Trigger Button (zum Öffnen)
+            local Trig = Instance.new("TextButton"); Trig.Parent = CPFrame; Trig.BackgroundTransparency = 1; Trig.Size = UDim2.new(1, 0, 0, 34); Trig.Text = ""
+
+            -- Container für die Farben (Versteckt am Anfang)
+            local Container = Instance.new("Frame"); Container.Parent = CPFrame; Container.BackgroundTransparency = 1; Container.Position = UDim2.new(0, 0, 0, 34); Container.Size = UDim2.new(1, 0, 0, 116)
+
+            -- 1. Saturation/Value Map (Das große Feld)
+            local SVMap = Instance.new("ImageLabel"); SVMap.Parent = Container; SVMap.Image = "rbxassetid://4155801252"; SVMap.Position = UDim2.new(0, 10, 0, 10); SVMap.Size = UDim2.new(1, -40, 0, 100); SVMap.BackgroundColor3 = Color3.fromHSV(HSV.H, 1, 1); SVMap.BorderSizePixel = 0
+            local SVC = Instance.new("UICorner"); SVC.CornerRadius = UDim.new(0, 4); SVC.Parent = SVMap
+            local Marker = Instance.new("Frame"); Marker.Parent = SVMap; Marker.BackgroundColor3 = Color3.fromRGB(255,255,255); Marker.Size = UDim2.new(0, 4, 0, 4); Marker.Position = UDim2.new(1, -2, 0, -2); Marker.BorderColor3 = Color3.fromRGB(0,0,0); Marker.BorderSizePixel = 1
+
+            -- 2. Hue Bar (Der Regenbogen Balken rechts)
+            local HueBar = Instance.new("ImageLabel"); HueBar.Parent = Container; HueBar.Image = "rbxassetid://3678880020"; HueBar.Position = UDim2.new(1, -25, 0, 10); HueBar.Size = UDim2.new(0, 15, 0, 100); HueBar.BackgroundColor3 = Color3.fromRGB(255,255,255); HueBar.BorderSizePixel = 0
+            local HC = Instance.new("UICorner"); HC.CornerRadius = UDim.new(0, 4); HC.Parent = HueBar
+            local HueMark = Instance.new("Frame"); HueMark.Parent = HueBar; HueMark.BackgroundColor3 = Color3.fromRGB(255,255,255); HueMark.Size = UDim2.new(1, 0, 0, 2); HueMark.Position = UDim2.new(0, 0, 0, 0); HueMark.BorderSizePixel = 0
+
+            -- Update Funktion
+            local function UpdateColor()
+                ColorVal = Color3.fromHSV(HSV.H, HSV.S, HSV.V)
+                Preview.BackgroundColor3 = ColorVal
+                SVMap.BackgroundColor3 = Color3.fromHSV(HSV.H, 1, 1)
+                pcall(Callback, ColorVal)
+            end
+
+            -- Hue Dragging Logic
+            local DraggingHue = false
+            HueBar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then DraggingHue = true end end)
+            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then DraggingHue = false end end)
+            UserInputService.InputChanged:Connect(function(i)
+                if DraggingHue and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    local Y = math.clamp((i.Position.Y - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
+                    HSV.H = 1 - Y
+                    HueMark.Position = UDim2.new(0, 0, Y, 0)
+                    UpdateColor()
+                end
+            end)
+
+            -- SV Dragging Logic
+            local DraggingSV = false
+            SVMap.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then DraggingSV = true end end)
+            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then DraggingSV = false end end)
+            UserInputService.InputChanged:Connect(function(i)
+                if DraggingSV and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+                    local X = math.clamp((i.Position.X - SVMap.AbsolutePosition.X) / SVMap.AbsoluteSize.X, 0, 1)
+                    local Y = math.clamp((i.Position.Y - SVMap.AbsolutePosition.Y) / SVMap.AbsoluteSize.Y, 0, 1)
+                    HSV.S = X
+                    HSV.V = 1 - Y
+                    Marker.Position = UDim2.new(X, -2, Y, -2)
+                    UpdateColor()
+                end
+            end)
+
+            -- Öffnen/Schließen
+            Trig.MouseButton1Click:Connect(function()
+                PickerOpen = not PickerOpen
+                Tween(CPFrame, {Size = UDim2.new(1, 0, 0, PickerOpen and 160 or 34)})
+            end)
+        end
+        
 
         return Elements
     end

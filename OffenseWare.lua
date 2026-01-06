@@ -15,8 +15,8 @@ local Mouse = LocalPlayer:GetMouse()
 
 -- // THEME 
 local Theme = {
-    Main = Color3.fromRGB(170, 60, 255),    -- Neon Purple (Akiri Glow)
-    Background = Color3.fromRGB(18, 18, 22), -- Deep Abyss Dark
+    Main = Color3.fromRGB(170, 60, 255),    -- Neon Purple (Glow)
+    Background = Color3.fromRGB(18, 18, 22), -- Deep Dark
     Sidebar = Color3.fromRGB(22, 22, 26),    -- Slightly Lighter
     Content = Color3.fromRGB(20, 20, 24),
     Element = Color3.fromRGB(30, 30, 35),    -- Interactive Elements
@@ -127,7 +127,7 @@ function Library:CreateWindow(HubName)
     local PageContainer = Instance.new("Frame")
     PageContainer.Parent = MainFrame; PageContainer.BackgroundColor3 = Theme.Content; PageContainer.BackgroundTransparency = 1; PageContainer.Position = UDim2.new(0, 150, 0, 15); PageContainer.Size = UDim2.new(1, -160, 1, -30)
 
-    -- // NOTIFICATION SYSTEM (Bitchbot Style) //
+    -- // NOTIFICATION SYSTEM (Bitchnose.xyz Style) //
     local NotifContainer = Instance.new("Frame"); NotifContainer.Parent = OffenseWare; NotifContainer.BackgroundTransparency = 1; NotifContainer.Position = UDim2.new(1, -270, 1, -20); NotifContainer.Size = UDim2.new(0, 250, 1, 0); NotifContainer.AnchorPoint = Vector2.new(0, 1)
     local NotifList = Instance.new("UIListLayout"); NotifList.Parent = NotifContainer; NotifList.SortOrder = Enum.SortOrder.LayoutOrder; NotifList.Padding = UDim.new(0, 5); NotifList.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
@@ -171,7 +171,7 @@ function Library:CreateWindow(HubName)
         local TPad = Instance.new("UIPadding"); TPad.Parent = TabBtn; TPad.PaddingLeft = UDim.new(0, 12)
         local TCor = Instance.new("UICorner"); TCor.CornerRadius = UDim.new(0, 6); TCor.Parent = TabBtn
         
-        -- Active Indicator (Bracket Style)
+        -- Active Indicator (Bitchnose.xyz Style)
         local Ind = Instance.new("Frame"); Ind.Parent = TabBtn; Ind.BackgroundColor3 = Theme.Main; Ind.Size = UDim2.new(0, 3, 0, 16); Ind.Position = UDim2.new(0, -12, 0.5, -8); Ind.Visible = false; Ind.BorderSizePixel = 0
         local IndC = Instance.new("UICorner"); IndC.CornerRadius = UDim.new(1,0); IndC.Parent = Ind
 
@@ -240,7 +240,7 @@ function Library:CreateWindow(HubName)
             end)
         end
 
-        -- DROPDOWN (Bracket Style + Auto Close)
+        -- DROPDOWN (Bitchnose.xyz Style + Auto Close)
         function Elements:CreateDropdown(Text, Items, Default, Callback)
             local DropOpen = false
             local Selected = Default or "None"
@@ -253,7 +253,7 @@ function Library:CreateWindow(HubName)
             
             local Lab = Instance.new("TextLabel"); Lab.Parent = DropFrame; Lab.BackgroundTransparency = 1; Lab.Position = UDim2.new(0, 10, 0, 0); Lab.Size = UDim2.new(0.6, 0, 0, 34); Lab.Font = Enum.Font.Gotham; Lab.Text = Text; Lab.TextColor3 = Theme.Text; Lab.TextSize = 13; Lab.TextXAlignment = Enum.TextXAlignment.Left
             
-            -- CURRENT SELECTED DISPLAY (Bracket Style)
+            -- CURRENT SELECTED DISPLAY (Bitchnose.xyz Style)
             local SelLab = Instance.new("TextLabel"); SelLab.Parent = DropFrame; SelLab.BackgroundTransparency = 1; SelLab.Position = UDim2.new(0.6, 0, 0, 0); SelLab.Size = UDim2.new(0.4, -25, 0, 34); SelLab.Font = Enum.Font.GothamBold; SelLab.Text = Selected; SelLab.TextColor3 = Theme.Main; SelLab.TextSize = 13; SelLab.TextXAlignment = Enum.TextXAlignment.Right
 
             local Arrow = Instance.new("ImageLabel"); Arrow.Parent = DropFrame; Arrow.BackgroundTransparency = 1; Arrow.Position = UDim2.new(1, -22, 0.5, -8); Arrow.Size = UDim2.new(0, 16, 0, 16); Arrow.Image = "rbxassetid://6034818372"; Arrow.ImageColor3 = Theme.TextDim

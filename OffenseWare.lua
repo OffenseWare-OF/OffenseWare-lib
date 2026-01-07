@@ -1,8 +1,6 @@
 --[[ 
-    OffenseWare UI Library V8 
-    - Fixes: Real-time Dropdown Text, Auto-Canvas Resizing
-    - Mobile: Optimized Touch & Toggle Button
-]]
+    OffenseWare UI Library V1
+    - Mobile: Optimized ]]
 
 local Library = {}
 local UserInputService = game:GetService("UserInputService")
